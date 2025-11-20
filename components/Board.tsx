@@ -15,6 +15,24 @@ export const Board: React.FC<BoardProps> = ({ onCellClick, onCellHover }) => {
   const [hovered, setHover] = React.useState(false);
   useCursor(hovered);
 
+  // Cache materials to prevent re-creation
+  const boardMaterial = useMemo(() =>
+    new THREE.MeshStandardMaterial({
+      color: COLOR_BOARD,
+      roughness: 0.5
+    }),
+  []);
+
+  const edgeMaterial = useMemo(() =>
+    new THREE.MeshStandardMaterial({
+      color: "#8b4513",
+      depthWrite: true,
+      polygonOffset: true,
+      polygonOffsetFactor: 1,
+      polygonOffsetUnits: 1
+    }),
+  []);
+
   // Generate grid lines
   const lines = useMemo(() => {
     const lineArray = [];
@@ -24,18 +42,20 @@ export const Board: React.FC<BoardProps> = ({ onCellClick, onCellHover }) => {
       lineArray.push(
         <Line
           key={`h-${i}`}
-          points={[[-offset, 0.01, pos], [offset, 0.01, pos]]}
+          points={[[-offset, 0.02, pos], [offset, 0.02, pos]]}
           color={COLOR_GRID}
           lineWidth={1}
+          renderOrder={1}
         />
       );
       // Vertical
       lineArray.push(
         <Line
           key={`v-${i}`}
-          points={[[pos, 0.01, -offset], [pos, 0.01, offset]]}
+          points={[[pos, 0.02, -offset], [pos, 0.02, offset]]}
           color={COLOR_GRID}
           lineWidth={1}
+          renderOrder={1}
         />
       );
     }
@@ -66,9 +86,9 @@ export const Board: React.FC<BoardProps> = ({ onCellClick, onCellHover }) => {
   return (
     <group>
       {/* Physical Board Block */}
-      <mesh 
-        receiveShadow 
-        position={[0, -0.5, 0]} 
+      <mesh
+        receiveShadow
+        position={[0, -0.5, 0]}
         onPointerMove={handlePointerMove}
         onClick={handleClick}
         onPointerOver={() => setHover(true)}
@@ -78,30 +98,30 @@ export const Board: React.FC<BoardProps> = ({ onCellClick, onCellHover }) => {
         }}
       >
         <boxGeometry args={[boardSizeUnits + 1, 1, boardSizeUnits + 1]} />
-        <meshStandardMaterial color={COLOR_BOARD} roughness={0.5} />
+        <primitive object={boardMaterial} attach="material" />
       </mesh>
 
       {/* Grid Lines */}
-      <group position={[0, 0.02, 0]}>
+      <group position={[0, 0, 0]}>
         {lines}
       </group>
 
       {/* Decoration - Board Sides darker wood */}
-      <mesh position={[0, -0.5, (boardSizeUnits + 1)/2]} receiveShadow>
+      <mesh position={[0, -0.5, (boardSizeUnits + 1)/2]} castShadow={false} receiveShadow={false}>
          <boxGeometry args={[boardSizeUnits + 1, 1, 0.1]} />
-         <meshStandardMaterial color="#8b4513" />
+         <primitive object={edgeMaterial} attach="material" />
       </mesh>
-      <mesh position={[0, -0.5, -(boardSizeUnits + 1)/2]} receiveShadow>
+      <mesh position={[0, -0.5, -(boardSizeUnits + 1)/2]} castShadow={false} receiveShadow={false}>
          <boxGeometry args={[boardSizeUnits + 1, 1, 0.1]} />
-         <meshStandardMaterial color="#8b4513" />
+         <primitive object={edgeMaterial} attach="material" />
       </mesh>
-      <mesh position={[(boardSizeUnits + 1)/2, -0.5, 0]} receiveShadow>
+      <mesh position={[(boardSizeUnits + 1)/2, -0.5, 0]} castShadow={false} receiveShadow={false}>
          <boxGeometry args={[0.1, 1, boardSizeUnits + 1]} />
-         <meshStandardMaterial color="#8b4513" />
+         <primitive object={edgeMaterial} attach="material" />
       </mesh>
-      <mesh position={[-(boardSizeUnits + 1)/2, -0.5, 0]} receiveShadow>
+      <mesh position={[-(boardSizeUnits + 1)/2, -0.5, 0]} castShadow={false} receiveShadow={false}>
          <boxGeometry args={[0.1, 1, boardSizeUnits + 1]} />
-         <meshStandardMaterial color="#8b4513" />
+         <primitive object={edgeMaterial} attach="material" />
       </mesh>
     </group>
   );
