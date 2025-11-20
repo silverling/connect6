@@ -10,6 +10,8 @@ interface MenuProps {
   localPlayer: Player; // For network games
   winner: Player | null;
   myId: string;
+  stonesPlacedThisTurn: number; // For Connect-6 rule
+  isFirstMove: boolean; // For Connect-6 rule
   onStartLocal: () => void;
   onStartAI: () => void;
   onHost: () => void;
@@ -25,6 +27,8 @@ export const Menu: React.FC<MenuProps> = ({
   localPlayer,
   winner,
   myId,
+  stonesPlacedThisTurn,
+  isFirstMove,
   onStartLocal,
   onStartAI,
   onHost,
@@ -52,7 +56,8 @@ export const Menu: React.FC<MenuProps> = ({
             Connect 6 Master
           </h1>
           <p className="text-stone-400 text-center mb-6 text-sm">
-            First to connect {WIN_COUNT} stones wins.
+            First to connect {WIN_COUNT} stones wins.<br/>
+            <span className="text-amber-400 text-xs">Black places 1 stone first, then each player places 2 stones per turn.</span>
           </p>
 
           {/* Main View */}
@@ -191,6 +196,11 @@ export const Menu: React.FC<MenuProps> = ({
               {currentPlayer === Player.Black ? 'Black' : 'White'}
             </span>
           </div>
+          {status === GameStatus.Playing && (
+            <div className="mt-2 text-xs text-amber-400">
+              Stone {stonesPlacedThisTurn + 1} of {isFirstMove ? '1' : '2'}
+            </div>
+          )}
           {gameMode !== GameMode.Local && gameMode !== GameMode.AI && (
             <div className="mt-2 text-xs text-stone-500">
               Playing as: {localPlayer === Player.Black ? 'Black' : 'White'}

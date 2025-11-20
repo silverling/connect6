@@ -25,6 +25,10 @@ const App: React.FC = () => {
   const [hoverPos, setHoverPos] = useState<Coordinate | null>(null);
   const [resetCameraFlag, setResetCameraFlag] = useState(0);
 
+  // Connect-6 rule: track stones placed in current turn
+  const [stonesPlacedThisTurn, setStonesPlacedThisTurn] = useState(0);
+  const [isFirstMove, setIsFirstMove] = useState(true); // First move only places 1 stone
+
   // Network State
   const [myId, setMyId] = useState<string>('');
   const [localPlayerRole, setLocalPlayerRole] = useState<Player>(Player.Black);
@@ -48,6 +52,8 @@ const App: React.FC = () => {
     setWinningLine(null);
     setLastMove(null);
     setIsAITurn(false);
+    setStonesPlacedThisTurn(0);
+    setIsFirstMove(true);
     setStatus(GameStatus.Playing);
   };
 
@@ -66,35 +72,73 @@ const App: React.FC = () => {
       newBoard.set(key, player);
       return newBoard;
     });
-    
+
     const moveCoord = { row, col };
     setLastMove(moveCoord);
 
     const tempBoard = new Map<string, Player>(board);
     tempBoard.set(key, player);
-    
+
     const winLine = checkWin(tempBoard, moveCoord, player);
-    
+
     if (winLine) {
       handleWin(player, winLine);
       return;
     }
 
-    const nextPlayer = player === Player.Black ? Player.White : Player.Black;
-    setCurrentPlayer(nextPlayer);
+    // Connect-6 rule: determine stones per turn
+    const stonesPerTurn = isFirstMove ? 1 : 2;
+    const newStonesPlaced = stonesPlacedThisTurn + 1;
+
+    if (newStonesPlaced >= stonesPerTurn) {
+      // Turn complete, switch player
+      const nextPlayer = player === Player.Black ? Player.White : Player.Black;
+      setCurrentPlayer(nextPlayer);
+      setStonesPlacedThisTurn(0);
+      setIsFirstMove(false);
+    } else {
+      // Same player continues
+      setStonesPlacedThisTurn(newStonesPlaced);
+    }
   };
 
-  // AI Turn Effect
+  // AI Turn Effect - handles AI placing 1 or 2 stones per turn
   useEffect(() => {
     if (status === GameStatus.Playing && gameMode === GameMode.AI && currentPlayer === Player.White && !isAITurn && !winner) {
         setIsAITurn(true);
 
         const timer = setTimeout(() => {
             try {
-                const aiMove = getBestMove(boardRef.current, Player.White);
-                if (aiMove && aiMove.row >= 0 && aiMove.col >= 0) {
-                    executeMove(aiMove.row, aiMove.col, Player.White);
+                // Determine how many stones AI needs to place
+                const stonesToPlace = isFirstMove ? 1 : 2;
+                let currentBoard = new Map(boardRef.current);
+
+                for (let i = 0; i < stonesToPlace; i++) {
+                    const aiMove = getBestMove(currentBoard, Player.White);
+                    if (aiMove && aiMove.row >= 0 && aiMove.col >= 0) {
+                        const key = getKey(aiMove.row, aiMove.col);
+                        currentBoard.set(key, Player.White);
+
+                        setBoard(new Map(currentBoard));
+                        setLastMove({ row: aiMove.row, col: aiMove.col });
+
+                        // Check for win
+                        const winLine = checkWin(currentBoard, { row: aiMove.row, col: aiMove.col }, Player.White);
+                        if (winLine) {
+                            handleWin(Player.White, winLine);
+                            setIsAITurn(false);
+                            return;
+                        }
+                    }
                 }
+
+                // Update boardRef for next turn
+                boardRef.current = currentBoard;
+
+                // After AI completes its turn, switch to Black
+                setCurrentPlayer(Player.Black);
+                setStonesPlacedThisTurn(0);
+                setIsFirstMove(false);
             } catch (e) {
                 console.error("AI Execution Error", e);
             } finally {
@@ -278,6 +322,8 @@ const App: React.FC = () => {
         localPlayer={localPlayerRole}
         winner={winner}
         myId={myId}
+        stonesPlacedThisTurn={stonesPlacedThisTurn}
+        isFirstMove={isFirstMove}
         onStartLocal={startLocalGame}
         onStartAI={startAIGame}
         onHost={handleHost}
