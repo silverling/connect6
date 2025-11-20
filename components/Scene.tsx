@@ -1,6 +1,6 @@
 import React, { useRef, useEffect } from 'react';
 import { Canvas } from '@react-three/fiber';
-import { OrbitControls, Environment, ContactShadows, PerspectiveCamera } from '@react-three/drei';
+import { OrbitControls, Environment, PerspectiveCamera } from '@react-three/drei';
 import { Board } from './Board';
 import { Stone } from './Stone';
 import { BoardState, Player, Coordinate } from '../types';
@@ -69,13 +69,18 @@ export const Scene: React.FC<SceneProps> = ({
         
         {/* Lighting */}
         <ambientLight intensity={0.6} />
-        <spotLight 
-          position={[5, 30, 5]} 
-          angle={0.5} 
-          penumbra={0.5} 
-          intensity={0.8} 
-          castShadow 
-          shadow-mapSize={[2048, 2048]} 
+        <directionalLight
+          position={[10, 20, 10]}
+          intensity={0.8}
+          castShadow
+          shadow-mapSize={[2048, 2048]}
+          shadow-camera-left={-15}
+          shadow-camera-right={15}
+          shadow-camera-top={15}
+          shadow-camera-bottom={-15}
+          shadow-camera-near={0.1}
+          shadow-camera-far={50}
+          shadow-bias={-0.0001}
         />
         <Environment preset="city" />
 
@@ -121,8 +126,6 @@ export const Scene: React.FC<SceneProps> = ({
                 </group>
             )}
         </group>
-        
-        <ContactShadows opacity={0.5} scale={50} blur={2} far={10} resolution={256} color="#000000" />
       </Canvas>
     </div>
   );

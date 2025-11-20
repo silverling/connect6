@@ -20,10 +20,9 @@ export const Stone: React.FC<StoneProps> = ({ position, player, isLastMove, isGh
   const RADIUS = CELL_SIZE * 0.48;
 
   const { scale, y } = useSpring({
-    from: { scale: 0, y: 5 },
+    from: isGhost ? { scale: 1, y: position[1] } : { scale: 0, y: 5 },
     to: { scale: 1, y: position[1] },
     config: { mass: 1, tension: 280, friction: 60 },
-    delay: isGhost ? 0 : 0,
     immediate: isGhost
   });
 
@@ -54,19 +53,27 @@ export const Stone: React.FC<StoneProps> = ({ position, player, isLastMove, isGh
   return (
     <group position={[position[0], 0, position[2]]}>
       {/* Stone Body */}
-      <animated.mesh
-        position-y={isGhost ? position[1] : y}
-        // Apply non-uniform scale to create the lenticular shape [1, 0.42, 1]
-        scale={isGhost 
-          ? [1, FLATTEN_RATIO, 1] 
-          : scale.to(s => [s, s * FLATTEN_RATIO, s])
-        }
-        castShadow
-        receiveShadow
-      >
-        <sphereGeometry args={[RADIUS, 32, 24]} />
-        <primitive object={material} attach="material" />
-      </animated.mesh>
+      {isGhost ? (
+        <mesh
+          position-y={position[1]}
+          scale={[1, FLATTEN_RATIO, 1]}
+          castShadow
+          receiveShadow
+        >
+          <sphereGeometry args={[RADIUS, 32, 24]} />
+          <primitive object={material} attach="material" />
+        </mesh>
+      ) : (
+        <animated.mesh
+          position-y={y}
+          scale={scale.to(s => [s, s * FLATTEN_RATIO, s])}
+          castShadow
+          receiveShadow
+        >
+          <sphereGeometry args={[RADIUS, 32, 24]} />
+          <primitive object={material} attach="material" />
+        </animated.mesh>
+      )}
       
       {/* Last Move Indicator */}
       {isLastMove && !isGhost && (
