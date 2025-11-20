@@ -13,6 +13,7 @@ import {
 import { getKey, isValidMove, checkWin } from './utils/gameLogic';
 import { getBestMove } from './utils/ai';
 import { PeerService } from './services/PeerService';
+import { soundManager } from './utils/soundManager';
 
 const App: React.FC = () => {
   // Game State
@@ -66,6 +67,19 @@ const App: React.FC = () => {
     setWinningLine(line);
     setStatus(GameStatus.Ended);
 
+    // Play appropriate sound effect
+    if (gameMode === GameMode.Local || gameMode === GameMode.AI) {
+      // In local/AI mode, always play win sound
+      soundManager.playWin();
+    } else if (gameMode === GameMode.OnlineHost || gameMode === GameMode.OnlineJoin) {
+      // In online mode, play win if local player won, fail if opponent won
+      if (player === localPlayerRole) {
+        soundManager.playWin();
+      } else {
+        soundManager.playFail();
+      }
+    }
+
     // Send win message to opponent in online games
     if ((gameMode === GameMode.OnlineHost || gameMode === GameMode.OnlineJoin) && peerService.current) {
       peerService.current.send({
@@ -78,6 +92,9 @@ const App: React.FC = () => {
   const executeMove = (row: number, col: number, player: Player) => {
     const key = getKey(row, col);
     if (board.has(key)) return;
+
+    // Play stone placement sound
+    soundManager.playPlaceStone();
 
     setBoard(prev => {
       const newBoard = new Map(prev);
@@ -232,6 +249,13 @@ const App: React.FC = () => {
             setWinner(data.payload.winner);
             setWinningLine(data.payload.line);
             setStatus(GameStatus.Ended);
+
+            // Play appropriate sound
+            if (data.payload.winner === localPlayerRole) {
+              soundManager.playWin();
+            } else {
+              soundManager.playFail();
+            }
           }
           else if (data.type === 'restart_request') {
             console.log('[Host] Client requested restart');
@@ -309,6 +333,13 @@ const App: React.FC = () => {
                  setWinner(data.payload.winner);
                  setWinningLine(data.payload.line);
                  setStatus(GameStatus.Ended);
+
+                 // Play appropriate sound
+                 if (data.payload.winner === localPlayerRole) {
+                   soundManager.playWin();
+                 } else {
+                   soundManager.playFail();
+                 }
              } else if (data.type === 'restart_request') {
                  console.log('[Client] Host requested restart');
                  if (waitingForOpponent) {
