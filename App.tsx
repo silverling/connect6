@@ -86,60 +86,36 @@ const App: React.FC = () => {
 
   // AI Turn Effect
   useEffect(() => {
-    console.log('[AI Check]', { status, gameMode, currentPlayer, isAITurn, winner, boardSize: board.size });
-
     if (status === GameStatus.Playing && gameMode === GameMode.AI && currentPlayer === Player.White && !isAITurn && !winner) {
-        console.log('[AI] AI turn triggered, setting timeout...');
         setIsAITurn(true);
 
         const timer = setTimeout(() => {
-            console.log('[AI] ⏰ Timeout fired! Starting AI move calculation...');
             try {
-                console.log('[AI] Getting best move...');
                 const aiMove = getBestMove(boardRef.current, Player.White);
-                console.log('[AI] Best move:', aiMove);
                 if (aiMove && aiMove.row >= 0 && aiMove.col >= 0) {
-                    console.log('[AI] Executing move at', aiMove.row, aiMove.col);
                     executeMove(aiMove.row, aiMove.col, Player.White);
-                } else {
-                    console.error('[AI] Invalid move returned:', aiMove);
                 }
             } catch (e) {
                 console.error("AI Execution Error", e);
             } finally {
-                console.log('[AI] Resetting isAITurn to false');
                 setIsAITurn(false);
             }
         }, 500);
 
-        console.log('[AI] Timeout set with ID:', timer);
-
         return () => {
-            console.log('[AI] Cleanup: clearing timeout', timer);
             clearTimeout(timer);
         };
     }
-  }, [status, gameMode, currentPlayer, winner]); // 移除 isAITurn 避免循环触发
+  }, [status, gameMode, currentPlayer, winner]);
 
   const onCellClick = (row: number, col: number) => {
-    console.log('[Click] Cell clicked:', row, col);
-    if (status !== GameStatus.Playing) {
-      console.log('[Click] Not playing, status:', status);
-      return;
-    }
-    if (!isValidMove(board, row, col)) {
-      console.log('[Click] Invalid move');
-      return;
-    }
-    if (gameMode === GameMode.AI && isAITurn) {
-      console.log('[Click] AI is thinking');
-      return;
-    }
+    if (status !== GameStatus.Playing) return;
+    if (!isValidMove(board, row, col)) return;
+    if (gameMode === GameMode.AI && isAITurn) return;
     if (gameMode !== GameMode.Local && gameMode !== GameMode.AI) {
       if (currentPlayer !== localPlayerRole) return;
     }
 
-    console.log('[Click] Executing player move');
     executeMove(row, col, currentPlayer);
 
     if ((gameMode === GameMode.OnlineHost || gameMode === GameMode.OnlineJoin) && peerService.current) {
@@ -331,8 +307,8 @@ const App: React.FC = () => {
         </div>
       )}
 
-      {/* Debug Logger - temporarily enabled for AI debugging */}
-      {import.meta.env.DEV && <DebugLogger />}
+      {/* Debug Logger - disabled */}
+      {/* {import.meta.env.DEV && <DebugLogger />} */}
     </div>
   );
 };

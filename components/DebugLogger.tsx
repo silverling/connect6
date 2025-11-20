@@ -9,7 +9,7 @@ interface LogEntry {
 
 export const DebugLogger: React.FC = () => {
   const [logs, setLogs] = useState<LogEntry[]>([]);
-  const [isVisible, setIsVisible] = useState(true); // 临时设为可见以调试
+  const [isVisible, setIsVisible] = useState(false); // 恢复默认隐藏
   const [isMinimized, setIsMinimized] = useState(false);
   const logIdRef = useRef(0); // 使用 ref 保持 ID 递增
 
