@@ -112,7 +112,7 @@ export const Menu: React.FC<MenuProps> = ({
                     Host a Room
                   </div>
 
-                  {myId ? (
+                  {myId && gameMode === GameMode.OnlineHost ? (
                     <>
                       <div className="text-stone-400 text-sm mb-3">
                         Share this Room ID with others to let them join:
@@ -160,26 +160,40 @@ export const Menu: React.FC<MenuProps> = ({
                     Join a Room
                   </div>
 
-                  <div className="text-stone-400 text-sm mb-3">
-                    Enter the host's Room ID to join their game:
-                  </div>
+                  {gameMode === GameMode.OnlineJoin && myId ? (
+                    <>
+                      <div className="text-stone-400 text-sm mb-3">
+                        Connecting to host...
+                      </div>
+                      <div className="flex items-center gap-3 bg-black/50 p-4 rounded-lg border border-stone-800">
+                        <div className="animate-spin rounded-full h-5 w-5 border-b-2 border-amber-400"></div>
+                        <span className="text-stone-300 text-sm">Please wait...</span>
+                      </div>
+                    </>
+                  ) : (
+                    <>
+                      <div className="text-stone-400 text-sm mb-3">
+                        Enter the host's Room ID to join their game:
+                      </div>
 
-                  <div className="flex gap-2">
-                    <input
-                      placeholder="Paste Room ID here..."
-                      className="flex-1 bg-black/50 border border-stone-700 rounded-lg px-4 py-2.5 text-sm text-stone-300 placeholder-stone-600 focus:border-amber-500 focus:outline-none focus:ring-1 focus:ring-amber-500/50"
-                      value={joinId}
-                      onChange={(e) => setJoinId(e.target.value)}
-                      onKeyDown={(e) => e.key === 'Enter' && joinId && onJoin(joinId)}
-                    />
-                    <button
-                      onClick={() => onJoin(joinId)}
-                      disabled={!joinId}
-                      className="px-6 py-2.5 bg-gradient-to-r from-green-600 to-green-700 hover:from-green-500 hover:to-green-600 disabled:from-stone-800 disabled:to-stone-800 rounded-lg text-sm font-bold text-white disabled:text-stone-600 border border-green-800 disabled:border-stone-700 transition disabled:cursor-not-allowed"
-                    >
-                      Join
-                    </button>
-                  </div>
+                      <div className="flex gap-2">
+                        <input
+                          placeholder="Paste Room ID here..."
+                          className="flex-1 bg-black/50 border border-stone-700 rounded-lg px-4 py-2.5 text-sm text-stone-300 placeholder-stone-600 focus:border-amber-500 focus:outline-none focus:ring-1 focus:ring-amber-500/50"
+                          value={joinId}
+                          onChange={(e) => setJoinId(e.target.value)}
+                          onKeyDown={(e) => e.key === 'Enter' && joinId && onJoin(joinId)}
+                        />
+                        <button
+                          onClick={() => onJoin(joinId)}
+                          disabled={!joinId}
+                          className="px-6 py-2.5 bg-gradient-to-r from-green-600 to-green-700 hover:from-green-500 hover:to-green-600 disabled:from-stone-800 disabled:to-stone-800 rounded-lg text-sm font-bold text-white disabled:text-stone-600 border border-green-800 disabled:border-stone-700 transition disabled:cursor-not-allowed"
+                        >
+                          Join
+                        </button>
+                      </div>
+                    </>
+                  )}
                </div>
             </div>
           )}
