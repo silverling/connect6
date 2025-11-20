@@ -40,6 +40,6 @@ export interface MoveData {
 export type BoardState = Map<string, Player>;
 
 export interface NetworkMessage {
-  type: 'move' | 'start' | 'restart' | 'join';
+  type: 'move' | 'start' | 'restart' | 'join' | 'win' | 'restart_request';
   payload?: any;
 }

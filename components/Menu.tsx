@@ -12,11 +12,14 @@ interface MenuProps {
   myId: string;
   stonesPlacedThisTurn: number; // For Connect-6 rule
   isFirstMove: boolean; // For Connect-6 rule
+  restartRequested: boolean; // Opponent requested restart
+  waitingForOpponent: boolean; // Waiting for opponent to confirm restart
   onStartLocal: () => void;
   onStartAI: (difficulty: AIDifficulty) => void;
   onHost: () => void;
   onJoin: (id: string) => void;
   onRestart: () => void;
+  onCloseWinDialog: () => void;
   onLeave: () => void;
 }
 
@@ -29,11 +32,14 @@ export const Menu: React.FC<MenuProps> = ({
   myId,
   stonesPlacedThisTurn,
   isFirstMove,
+  restartRequested,
+  waitingForOpponent,
   onStartLocal,
   onStartAI,
   onHost,
   onJoin,
   onRestart,
+  onCloseWinDialog,
   onLeave,
 }) => {
   const [menuView, setMenuView] = useState<'main' | 'lobby' | 'difficulty'>('main');
@@ -313,20 +319,55 @@ export const Menu: React.FC<MenuProps> = ({
       {/* Game Over Modal */}
       {status === GameStatus.Ended && (
         <div className="absolute inset-0 flex items-center justify-center bg-black/60 backdrop-blur-sm z-20">
-          <div className="bg-stone-900 p-8 rounded-2xl border border-amber-500/30 shadow-2xl text-center animate-in fade-in zoom-in duration-300">
+          <div className="bg-stone-900 p-8 rounded-2xl border border-amber-500/30 shadow-2xl text-center animate-in fade-in zoom-in duration-300 relative">
+            {/* Close button */}
+            <button
+              onClick={onCloseWinDialog}
+              className="absolute top-4 right-4 text-stone-400 hover:text-white transition"
+              title="Close"
+            >
+              <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                <line x1="18" y1="6" x2="6" y2="18"></line>
+                <line x1="6" y1="6" x2="18" y2="18"></line>
+              </svg>
+            </button>
+
             <h2 className="text-5xl font-black text-white mb-2">
               {winner === Player.Black ? 'Black' : 'White'} Wins!
             </h2>
             <p className="text-stone-400 mb-8">Victory achieved by connecting {WIN_COUNT} stones.</p>
-            
+
+            {/* Show waiting status for online games */}
+            {(gameMode === GameMode.OnlineHost || gameMode === GameMode.OnlineJoin) && (
+              <div className="mb-6">
+                {restartRequested && (
+                  <div className="bg-amber-900/30 border border-amber-500/50 rounded-lg p-3 mb-4">
+                    <p className="text-amber-200 text-sm">
+                      Opponent wants to play again. Click "Play Again" to accept.
+                    </p>
+                  </div>
+                )}
+                {waitingForOpponent && (
+                  <div className="bg-blue-900/30 border border-blue-500/50 rounded-lg p-3 mb-4 flex items-center justify-center gap-2">
+                    <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-blue-400"></div>
+                    <p className="text-blue-200 text-sm">
+                      Waiting for opponent...
+                    </p>
+                  </div>
+                )}
+              </div>
+            )}
+
             <div className="flex gap-4 justify-center">
-              <button 
+              <button
                 onClick={onRestart}
                 className="py-3 px-8 bg-amber-600 hover:bg-amber-500 text-white font-bold rounded-full shadow-lg transition hover:scale-105"
               >
-                Play Again
+                {(gameMode === GameMode.OnlineHost || gameMode === GameMode.OnlineJoin) && restartRequested
+                  ? 'Accept & Play Again'
+                  : 'Play Again'}
               </button>
-              <button 
+              <button
                 onClick={onLeave}
                 className="py-3 px-8 bg-stone-800 hover:bg-stone-700 text-stone-300 font-bold rounded-full transition"
               >

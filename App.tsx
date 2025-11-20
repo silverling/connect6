@@ -34,6 +34,8 @@ const App: React.FC = () => {
   const [myId, setMyId] = useState<string>('');
   const [localPlayerRole, setLocalPlayerRole] = useState<Player>(Player.Black);
   const peerService = useRef<PeerService | null>(null);
+  const [restartRequested, setRestartRequested] = useState(false); // Track if opponent requested restart
+  const [waitingForOpponent, setWaitingForOpponent] = useState(false); // Track if we're waiting for opponent's restart confirmation
 
   // Lock for AI turn
   const [isAITurn, setIsAITurn] = useState(false);
@@ -63,6 +65,14 @@ const App: React.FC = () => {
     setWinner(player);
     setWinningLine(line);
     setStatus(GameStatus.Ended);
+
+    // Send win message to opponent in online games
+    if ((gameMode === GameMode.OnlineHost || gameMode === GameMode.OnlineJoin) && peerService.current) {
+      peerService.current.send({
+        type: 'win',
+        payload: { winner: player, line }
+      });
+    }
   };
 
   const executeMove = (row: number, col: number, player: Player) => {
@@ -217,7 +227,30 @@ const App: React.FC = () => {
           else if (data.type === 'move') {
             executeMove(data.payload.row, data.payload.col, data.payload.player);
           }
+          else if (data.type === 'win') {
+            // Receive win notification from client
+            setWinner(data.payload.winner);
+            setWinningLine(data.payload.line);
+            setStatus(GameStatus.Ended);
+          }
+          else if (data.type === 'restart_request') {
+            console.log('[Host] Client requested restart');
+            if (waitingForOpponent) {
+              // Both agreed, restart the game
+              console.log('[Host] Both players agreed, restarting...');
+              setRestartRequested(false);
+              setWaitingForOpponent(false);
+              resetGame();
+              peerService.current?.send({ type: 'restart' });
+            } else {
+              // Mark that opponent requested restart
+              setRestartRequested(true);
+            }
+          }
           else if (data.type === 'restart') {
+             console.log('[Host] Restart confirmed by client');
+             setRestartRequested(false);
+             setWaitingForOpponent(false);
              resetGame();
           }
         },
@@ -270,8 +303,29 @@ const App: React.FC = () => {
              } else if (data.type === 'move') {
                  console.log('[Client] Received move:', data.payload);
                  executeMove(data.payload.row, data.payload.col, data.payload.player);
+             } else if (data.type === 'win') {
+                 // Receive win notification from host
+                 console.log('[Client] Received win:', data.payload);
+                 setWinner(data.payload.winner);
+                 setWinningLine(data.payload.line);
+                 setStatus(GameStatus.Ended);
+             } else if (data.type === 'restart_request') {
+                 console.log('[Client] Host requested restart');
+                 if (waitingForOpponent) {
+                   // Both agreed, restart the game
+                   console.log('[Client] Both players agreed, restarting...');
+                   setRestartRequested(false);
+                   setWaitingForOpponent(false);
+                   resetGame();
+                   peerService.current?.send({ type: 'restart' });
+                 } else {
+                   // Mark that opponent requested restart
+                   setRestartRequested(true);
+                 }
              } else if (data.type === 'restart') {
-                 console.log('[Client] Restarting game');
+                 console.log('[Client] Restart confirmed by host');
+                 setRestartRequested(false);
+                 setWaitingForOpponent(false);
                  resetGame();
              }
           },
@@ -291,10 +345,29 @@ const App: React.FC = () => {
   };
 
   const handleRestart = () => {
-      resetGame();
-      if ((gameMode === GameMode.OnlineHost || gameMode === GameMode.OnlineJoin) && peerService.current) {
-          peerService.current.send({ type: 'restart' });
+      if (gameMode === GameMode.OnlineHost || gameMode === GameMode.OnlineJoin) {
+          if (restartRequested) {
+              // Opponent already requested, so both agreed
+              console.log('Both players agreed to restart');
+              setRestartRequested(false);
+              setWaitingForOpponent(false);
+              resetGame();
+              peerService.current?.send({ type: 'restart' });
+          } else {
+              // Send restart request and wait for opponent
+              console.log('Sending restart request to opponent');
+              setWaitingForOpponent(true);
+              peerService.current?.send({ type: 'restart_request' });
+          }
+      } else {
+          // Local or AI game, just restart
+          resetGame();
       }
+  };
+
+  const handleCloseWinDialog = () => {
+      // Just close the dialog, stay in the game
+      setStatus(GameStatus.Playing);
   };
 
   const handleLeave = () => {
@@ -327,11 +400,14 @@ const App: React.FC = () => {
         myId={myId}
         stonesPlacedThisTurn={stonesPlacedThisTurn}
         isFirstMove={isFirstMove}
+        restartRequested={restartRequested}
+        waitingForOpponent={waitingForOpponent}
         onStartLocal={startLocalGame}
         onStartAI={startAIGame}
         onHost={handleHost}
         onJoin={handleJoin}
         onRestart={handleRestart}
+        onCloseWinDialog={handleCloseWinDialog}
         onLeave={handleLeave}
       />
 
