@@ -121,12 +121,14 @@ const App: React.FC = () => {
     }
   };
 
-  const executeMove = (row: number, col: number, player: Player) => {
+  const executeMove = (row: number, col: number, player: Player, isRemoteMove: boolean = false) => {
     const key = getKey(row, col);
     if (board.has(key)) return;
 
     // If this is the first stone of a new turn, clear previous turn's highlights
-    if (stonesPlacedThisTurn === 0) {
+    // BUT: In online mode, only clear when it's a local move (not a remote move)
+    // Remote moves will be handled by the network sync logic
+    if (stonesPlacedThisTurn === 0 && !isRemoteMove) {
       setLastMoves([]);
     }
 
@@ -256,6 +258,9 @@ const App: React.FC = () => {
       const newStonesPlaced = stonesPlacedThisTurn + 1;
       const turnComplete = newStonesPlaced >= stonesPerTurn;
 
+      // Get current turn's moves (will include the stone we just placed)
+      const currentTurnMoves = [...lastMoves, { row, col }];
+
       peerService.current.send({
         type: 'move',
         payload: {
@@ -265,7 +270,8 @@ const App: React.FC = () => {
           stonesPlacedThisTurn: newStonesPlaced,
           isFirstMove: isFirstMove,
           turnComplete: turnComplete, // Tell opponent if turn is complete
-          nextPlayer: turnComplete ? (currentPlayer === Player.Black ? Player.White : Player.Black) : currentPlayer
+          nextPlayer: turnComplete ? (currentPlayer === Player.Black ? Player.White : Player.Black) : currentPlayer,
+          currentTurnMoves: currentTurnMoves // Send all stones placed in current turn
         }
       });
     }
@@ -322,12 +328,12 @@ const App: React.FC = () => {
           }
           else if (data.type === 'move') {
             // Receive move from client with explicit state synchronization
-            const { row, col, player, stonesPlacedThisTurn: opponentStonesPlaced, isFirstMove: opponentIsFirstMove, turnComplete, nextPlayer } = data.payload;
+            const { row, col, player, stonesPlacedThisTurn: opponentStonesPlaced, isFirstMove: opponentIsFirstMove, turnComplete, nextPlayer, currentTurnMoves } = data.payload;
 
-            console.log('[Host] Syncing state:', { opponentStonesPlaced, opponentIsFirstMove, turnComplete, nextPlayer });
+            console.log('[Host] Syncing state:', { opponentStonesPlaced, opponentIsFirstMove, turnComplete, nextPlayer, currentTurnMoves });
 
-            // Execute the move on our board
-            executeMove(row, col, player);
+            // Execute the move on our board (mark as remote move to prevent clearing lastMoves)
+            executeMove(row, col, player, true);
 
             // Force synchronize state with opponent's authoritative state
             // This ensures both players have exactly the same game state
@@ -342,7 +348,12 @@ const App: React.FC = () => {
                 setStonesPlacedThisTurn(opponentStonesPlaced);
                 setIsFirstMove(opponentIsFirstMove);
               }
-              console.log('[Host] State synchronized:', { nextPlayer, opponentStonesPlaced, turnComplete });
+              // Always sync the glow effect with opponent's current turn moves
+              // This shows what they just placed, whether turn is complete or not
+              if (currentTurnMoves && currentTurnMoves.length > 0) {
+                setLastMoves(currentTurnMoves);
+              }
+              console.log('[Host] State synchronized:', { nextPlayer, opponentStonesPlaced, turnComplete, currentTurnMoves });
             }, 0);
           }
           else if (data.type === 'win') {
@@ -427,12 +438,12 @@ const App: React.FC = () => {
                  resetGame();
              } else if (data.type === 'move') {
                  // Receive move from host with explicit state synchronization
-                 const { row, col, player, stonesPlacedThisTurn: opponentStonesPlaced, isFirstMove: opponentIsFirstMove, turnComplete, nextPlayer } = data.payload;
+                 const { row, col, player, stonesPlacedThisTurn: opponentStonesPlaced, isFirstMove: opponentIsFirstMove, turnComplete, nextPlayer, currentTurnMoves } = data.payload;
 
-                 console.log('[Client] Syncing state:', { opponentStonesPlaced, opponentIsFirstMove, turnComplete, nextPlayer });
+                 console.log('[Client] Syncing state:', { opponentStonesPlaced, opponentIsFirstMove, turnComplete, nextPlayer, currentTurnMoves });
 
-                 // Execute the move on our board
-                 executeMove(row, col, player);
+                 // Execute the move on our board (mark as remote move to prevent clearing lastMoves)
+                 executeMove(row, col, player, true);
 
                  // Force synchronize state with opponent's authoritative state
                  // This ensures both players have exactly the same game state
@@ -447,7 +458,12 @@ const App: React.FC = () => {
                      setStonesPlacedThisTurn(opponentStonesPlaced);
                      setIsFirstMove(opponentIsFirstMove);
                    }
-                   console.log('[Client] State synchronized:', { nextPlayer, opponentStonesPlaced, turnComplete });
+                   // Always sync the glow effect with opponent's current turn moves
+                   // This shows what they just placed, whether turn is complete or not
+                   if (currentTurnMoves && currentTurnMoves.length > 0) {
+                     setLastMoves(currentTurnMoves);
+                   }
+                   console.log('[Client] State synchronized:', { nextPlayer, opponentStonesPlaced, turnComplete, currentTurnMoves });
                  }, 0);
              } else if (data.type === 'win') {
                  // Receive win notification from host
