@@ -122,7 +122,7 @@ export const Menu: React.FC<MenuProps> = ({
               </h1>
               <p className="text-stone-400 text-center mb-6 text-sm">
                 {t.gameSubtitle}<br/>
-                <span className="text-amber-400 text-xs">{language === 'zh' ? '黑方先下1子，之后每回合各下2子' : language === 'ja' ? '黒が最初に1つ置き、その後各ターン2つずつ置く' : 'Black places 1 stone first, then each player places 2 stones per turn.'}</span>
+                <span className="text-amber-400 text-xs">{language === 'zh' ? '黑方先下1子，之后每回合各下2子' : language === 'ja' ? '黒が最初に1つ置き、その後各ターン2つずつ置く' : 'Black places 1 stone first, each player places 2 stones per turn.'}</span>
               </p>
             </>
           )}
