@@ -15,8 +15,11 @@ import { getBestMove } from './utils/ai';
 import { PeerService } from './services/PeerService';
 import { soundManager } from './utils/soundManager';
 import { roomService, RoomInfo } from './services/RoomService';
+import { useLanguage } from './i18n/LanguageContext';
 
 const App: React.FC = () => {
+  const { t } = useLanguage();
+
   // Game State
   const [status, setStatus] = useState<GameStatus>(GameStatus.Menu);
   const [gameMode, setGameMode] = useState<GameMode>(GameMode.Local);
@@ -486,7 +489,7 @@ const App: React.FC = () => {
       {/* Reset View Button */}
       {status === GameStatus.Playing && (
         <div className="absolute bottom-4 left-4 z-10 flex gap-2">
-            <button 
+            <button
                 onClick={() => setResetCameraFlag(f => f + 1)}
                 className="flex items-center gap-2 bg-stone-800/80 hover:bg-stone-700 text-amber-100/80 hover:text-amber-100 px-4 py-2 rounded-lg transition text-sm border border-white/10 backdrop-blur shadow-lg"
             >
@@ -494,11 +497,11 @@ const App: React.FC = () => {
                     <path d="M3 12a9 9 0 1 0 9-9 9.75 9.75 0 0 0-6.74 2.74L3 8"/>
                     <path d="M3 3v5h5"/>
                 </svg>
-                Reset View
+                {t.resetView}
             </button>
             {gameMode === GameMode.AI && isAITurn && (
                 <div className="flex items-center gap-2 bg-indigo-900/80 text-white px-4 py-2 rounded-lg text-sm border border-white/10 backdrop-blur shadow-lg animate-pulse">
-                   Thinking...
+                   {t.thinking}
                 </div>
             )}
         </div>

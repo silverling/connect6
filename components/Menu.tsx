@@ -3,6 +3,7 @@ import React, { useState, useEffect } from 'react';
 import { GameMode, Player, GameStatus, AIDifficulty } from '../types';
 import { RoomInfo } from '../services/RoomService';
 import { WIN_COUNT } from '../constants';
+import { useLanguage } from '../i18n/LanguageContext';
 
 interface MenuProps {
   status: GameStatus;
@@ -45,6 +46,7 @@ export const Menu: React.FC<MenuProps> = ({
   onCloseWinDialog,
   onLeave,
 }) => {
+  const { language, setLanguage, t } = useLanguage();
   const [menuView, setMenuView] = useState<'main' | 'lobby' | 'difficulty'>('main');
   const [joinId, setJoinId] = useState('');
   const [copied, setCopied] = useState(false);
@@ -60,14 +62,14 @@ export const Menu: React.FC<MenuProps> = ({
     return (
       <div className="absolute inset-0 flex items-center justify-center bg-black/80 backdrop-blur-sm z-10">
         <div className="bg-stone-900 p-8 rounded-2xl border border-stone-700 shadow-2xl max-w-md w-full relative overflow-hidden">
-          <h2 className="text-2xl font-bold text-amber-200 mb-2 text-center">Waiting for Player</h2>
+          <h2 className="text-2xl font-bold text-amber-200 mb-2 text-center">{t.waitingForPlayer}</h2>
           <p className="text-stone-400 text-center mb-6 text-sm">
-            Share your Room ID with a friend to start playing
+            {t.shareRoomId}
           </p>
 
           {/* Room ID Display */}
           <div className="bg-gradient-to-br from-stone-950 to-stone-900 border border-stone-700 rounded-xl p-5 mb-6">
-            <div className="text-xs text-stone-500 font-semibold uppercase mb-3">Your Room ID</div>
+            <div className="text-xs text-stone-500 font-semibold uppercase mb-3">{t.yourRoomId}</div>
             <div className="flex items-center gap-2 bg-black/50 p-3 rounded-lg border border-stone-800">
               <code className="flex-1 text-amber-300 font-mono text-lg select-all break-all text-center">
                 {myId}
@@ -77,7 +79,7 @@ export const Menu: React.FC<MenuProps> = ({
               onClick={copyId}
               className="w-full mt-3 py-2 px-4 bg-stone-800 hover:bg-stone-700 rounded-lg text-sm font-bold text-stone-300 border border-stone-700 transition"
             >
-              {copied ? '✓ Copied to Clipboard' : 'Copy Room ID'}
+              {copied ? t.copiedToClipboard : t.copyRoomId}
             </button>
           </div>
 
@@ -85,7 +87,7 @@ export const Menu: React.FC<MenuProps> = ({
           <div className="flex flex-col items-center gap-4 mb-6">
             <div className="flex items-center gap-3">
               <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-amber-400"></div>
-              <span className="text-stone-300">Waiting for opponent to join...</span>
+              <span className="text-stone-300">{t.waitingForOpponent}</span>
             </div>
             <div className="flex gap-1">
               <div className="w-2 h-2 bg-amber-400 rounded-full animate-bounce" style={{ animationDelay: '0ms' }}></div>
@@ -99,7 +101,7 @@ export const Menu: React.FC<MenuProps> = ({
             onClick={onLeave}
             className="w-full py-3 px-4 bg-stone-800 hover:bg-stone-700 border border-stone-600 text-stone-300 font-semibold rounded-lg transition"
           >
-            Cancel
+            {t.cancel}
           </button>
         </div>
       </div>
@@ -111,15 +113,28 @@ export const Menu: React.FC<MenuProps> = ({
       <div className="absolute inset-0 flex items-center justify-center bg-black/80 backdrop-blur-sm z-10">
         <div className="bg-stone-900 p-8 rounded-2xl border border-stone-700 shadow-2xl max-w-md w-full relative overflow-hidden">
 
+          {/* Language Selector - Top Right */}
+          <div className="absolute top-4 right-4 z-20">
+            <select
+              value={language}
+              onChange={(e) => setLanguage(e.target.value as 'en' | 'zh' | 'ja')}
+              className="bg-stone-800 text-stone-300 border border-stone-600 rounded px-2 py-1 text-sm cursor-pointer hover:bg-stone-700 transition"
+            >
+              <option value="en">{t.english}</option>
+              <option value="zh">{t.chinese}</option>
+              <option value="ja">{t.japanese}</option>
+            </select>
+          </div>
+
           {/* Header - Only show in main view */}
           {menuView === 'main' && (
             <>
               <h1 className="text-4xl font-extrabold text-transparent bg-clip-text bg-gradient-to-r from-amber-200 to-amber-600 mb-2 text-center">
-                Connect 6 Master
+                {t.gameTitle}
               </h1>
               <p className="text-stone-400 text-center mb-6 text-sm">
-                First to connect {WIN_COUNT} stones wins.<br/>
-                <span className="text-amber-400 text-xs">Black places 1 stone first, then each player places 2 stones per turn.</span>
+                {t.gameSubtitle}<br/>
+                <span className="text-amber-400 text-xs">{language === 'zh' ? '黑方先下1子，之后每回合各下2子' : language === 'ja' ? '黒が最初に1つ置き、その後各ターン2つずつ置く' : 'Black places 1 stone first, then each player places 2 stones per turn.'}</span>
               </p>
             </>
           )}
@@ -131,27 +146,27 @@ export const Menu: React.FC<MenuProps> = ({
                 onClick={() => setMenuView('difficulty')}
                 className="w-full py-3 px-4 bg-gradient-to-r from-indigo-600 to-indigo-700 hover:from-indigo-500 hover:to-indigo-600 text-white font-bold rounded-lg transition shadow-lg transform hover:scale-[1.02]"
               >
-                Play vs Computer
+                {t.playVsComputer}
               </button>
 
-              <button 
+              <button
                 onClick={onStartLocal}
                 className="w-full py-3 px-4 bg-gradient-to-r from-amber-600 to-amber-700 hover:from-amber-500 hover:to-amber-600 text-white font-bold rounded-lg transition shadow-lg transform hover:scale-[1.02]"
               >
-                Local 1v1
+                {t.localOneVsOne}
               </button>
 
               <div className="relative py-2">
                 <div className="absolute inset-0 flex items-center"><span className="w-full border-t border-stone-700"></span></div>
-                <div className="relative flex justify-center text-xs uppercase"><span className="bg-stone-900 px-2 text-stone-500">Online Multiplayer</span></div>
+                <div className="relative flex justify-center text-xs uppercase"><span className="bg-stone-900 px-2 text-stone-500">{t.onlineMultiplayer}</span></div>
               </div>
 
-              <button 
+              <button
                 onClick={() => setMenuView('lobby')}
                 className="w-full py-3 px-4 bg-stone-800 hover:bg-stone-700 border border-stone-600 text-amber-100 font-semibold rounded-lg transition group flex items-center justify-center gap-2"
               >
                 <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="group-hover:text-amber-400 transition"><circle cx="12" cy="12" r="10"/><path d="M2 12h20"/><path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"/></svg>
-                Online Lobby
+                {t.onlineLobby}
               </button>
             </div>
           )}
@@ -161,7 +176,7 @@ export const Menu: React.FC<MenuProps> = ({
             <div className="animate-in slide-in-from-right duration-300">
                <div className="flex items-center justify-between mb-6">
                    <button onClick={() => setMenuView('main')} className="text-stone-400 hover:text-white text-sm flex items-center gap-1">
-                     ← Back
+                     ← {t.back}
                    </button>
                </div>
 
@@ -169,13 +184,13 @@ export const Menu: React.FC<MenuProps> = ({
                <div className="bg-gradient-to-br from-stone-950 to-stone-900 border border-stone-700 rounded-xl p-5 mb-5 shadow-lg">
                   <div className="text-xs text-stone-500 font-semibold uppercase mb-3 flex items-center gap-2">
                     <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M22 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>
-                    Host a Room
+                    {t.hostARoom}
                   </div>
 
                   {myId && gameMode === GameMode.OnlineHost ? (
                     <>
                       <div className="text-stone-400 text-sm mb-3">
-                        Share this Room ID with others to let them join:
+                        {t.shareRoomId}
                       </div>
                       <div className="flex items-center gap-2 bg-black/50 p-3 rounded-lg border border-stone-800">
                         <code className="flex-1 text-amber-300 font-mono text-sm select-all break-all">
@@ -185,12 +200,12 @@ export const Menu: React.FC<MenuProps> = ({
                           onClick={copyId}
                           className="px-3 py-1.5 bg-stone-800 hover:bg-stone-700 rounded text-xs font-bold text-stone-300 border border-stone-700 transition whitespace-nowrap"
                         >
-                          {copied ? '✓ Copied' : 'Copy'}
+                          {copied ? t.copied : t.copy}
                         </button>
                       </div>
                       <div className="mt-3 text-xs text-stone-500 flex items-start gap-2">
                         <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="mt-0.5 flex-shrink-0"><circle cx="12" cy="12" r="10"/><path d="M12 16v-4"/><path d="M12 8h.01"/></svg>
-                        <span>Waiting for another player to join...</span>
+                        <span>{t.waitingForOpponent}</span>
                       </div>
                     </>
                   ) : (
@@ -198,7 +213,7 @@ export const Menu: React.FC<MenuProps> = ({
                       onClick={onHost}
                       className="w-full py-3 px-4 bg-gradient-to-r from-amber-600 to-amber-700 hover:from-amber-500 hover:to-amber-600 text-white font-bold rounded-lg transition shadow-lg transform hover:scale-[1.02]"
                     >
-                      Create Room
+                      {t.createRoom}
                     </button>
                   )}
                </div>
@@ -209,7 +224,7 @@ export const Menu: React.FC<MenuProps> = ({
                    <span className="w-full border-t border-stone-700"></span>
                  </div>
                  <div className="relative flex justify-center text-xs uppercase">
-                   <span className="bg-stone-900 px-3 text-stone-500">or</span>
+                   <span className="bg-stone-900 px-3 text-stone-500">{t.or}</span>
                  </div>
                </div>
 
@@ -217,17 +232,17 @@ export const Menu: React.FC<MenuProps> = ({
                <div className="bg-gradient-to-br from-stone-950 to-stone-900 border border-stone-700 rounded-xl p-5 shadow-lg">
                   <div className="text-xs text-stone-500 font-semibold uppercase mb-3 flex items-center gap-2">
                     <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M16 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="8.5" cy="7" r="4"/><line x1="20" y1="8" x2="20" y2="14"/><line x1="23" y1="11" x2="17" y2="11"/></svg>
-                    Available Rooms
+                    {t.availableRooms}
                   </div>
 
                   {gameMode === GameMode.OnlineJoin && myId ? (
                     <>
                       <div className="text-stone-400 text-sm mb-3">
-                        Connecting to host...
+                        {t.connectingToHost}
                       </div>
                       <div className="flex items-center gap-3 bg-black/50 p-4 rounded-lg border border-stone-800">
                         <div className="animate-spin rounded-full h-5 w-5 border-b-2 border-amber-400"></div>
-                        <span className="text-stone-300 text-sm">Please wait...</span>
+                        <span className="text-stone-300 text-sm">{t.pleaseWait}</span>
                       </div>
                     </>
                   ) : (
@@ -237,8 +252,8 @@ export const Menu: React.FC<MenuProps> = ({
                           <svg xmlns="http://www.w3.org/2000/svg" width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" className="mx-auto mb-3 text-stone-600">
                             <rect x="3" y="11" width="18" height="10" rx="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/>
                           </svg>
-                          <p className="text-stone-500 text-sm">No rooms available</p>
-                          <p className="text-stone-600 text-xs mt-1">Create a room to start playing!</p>
+                          <p className="text-stone-500 text-sm">{t.noRoomsAvailable}</p>
+                          <p className="text-stone-600 text-xs mt-1">{t.createRoomToStart}</p>
                         </div>
                       ) : (
                         <div className="space-y-2 max-h-60 overflow-y-auto">
@@ -257,7 +272,7 @@ export const Menu: React.FC<MenuProps> = ({
                                     </span>
                                   </div>
                                   <div className="text-xs text-stone-400">
-                                    Players: {room.playerCount}/{room.maxPlayers}
+                                    {t.playersCount}: {room.playerCount}/{room.maxPlayers}
                                   </div>
                                 </div>
                                 <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="text-stone-600 group-hover:text-amber-400 transition">
@@ -279,13 +294,13 @@ export const Menu: React.FC<MenuProps> = ({
             <div className="animate-in slide-in-from-right duration-300">
               <div className="flex items-center justify-between mb-8">
                 <button onClick={() => setMenuView('main')} className="text-stone-400 hover:text-white text-sm flex items-center gap-1">
-                  ← Back
+                  ← {t.back}
                 </button>
               </div>
 
               <div className="text-stone-300 text-center mb-8">
-                <h3 className="text-2xl font-bold text-amber-200 mb-2">Select Difficulty</h3>
-                <p className="text-sm text-stone-400">Choose your challenge level</p>
+                <h3 className="text-2xl font-bold text-amber-200 mb-2">{t.selectDifficulty}</h3>
+                <p className="text-sm text-stone-400">{t.chooseDifficulty}</p>
               </div>
 
               <div className="space-y-4">
@@ -298,10 +313,9 @@ export const Menu: React.FC<MenuProps> = ({
                 >
                   <div className="flex items-center justify-between">
                     <div>
-                      <div className="font-bold text-lg">Easy</div>
-                      <div className="text-xs text-green-100 opacity-80">Casual play, makes mistakes</div>
+                      <div className="font-bold text-lg">{t.difficultyEasy}</div>
+                      <div className="text-xs text-green-100 opacity-80">{t.difficultyEasyDesc}</div>
                     </div>
-                    <div className="text-3xl">😊</div>
                   </div>
                 </button>
 
@@ -314,10 +328,9 @@ export const Menu: React.FC<MenuProps> = ({
                 >
                   <div className="flex items-center justify-between">
                     <div>
-                      <div className="font-bold text-lg">Medium</div>
-                      <div className="text-xs text-yellow-100 opacity-80">Balanced strategy, good for practice</div>
+                      <div className="font-bold text-lg">{t.difficultyMedium}</div>
+                      <div className="text-xs text-yellow-100 opacity-80">{t.difficultyMediumDesc}</div>
                     </div>
-                    <div className="text-3xl">🤔</div>
                   </div>
                 </button>
 
@@ -330,10 +343,9 @@ export const Menu: React.FC<MenuProps> = ({
                 >
                   <div className="flex items-center justify-between">
                     <div>
-                      <div className="font-bold text-lg">Hard</div>
-                      <div className="text-xs text-red-100 opacity-80">Expert AI, no mercy!</div>
+                      <div className="font-bold text-lg">{t.difficultyHard}</div>
+                      <div className="text-xs text-red-100 opacity-80">{t.difficultyHardDesc}</div>
                     </div>
-                    <div className="text-3xl">😈</div>
                   </div>
                 </button>
               </div>
@@ -349,37 +361,37 @@ export const Menu: React.FC<MenuProps> = ({
     <>
       <div className="absolute top-0 left-0 right-0 p-4 flex justify-between items-start pointer-events-none z-10">
         <div className="bg-black/50 backdrop-blur-md rounded-lg p-4 text-white border border-white/10 pointer-events-auto shadow-lg">
-          <div className="text-xs text-stone-400 uppercase tracking-wider mb-1">Current Turn</div>
+          <div className="text-xs text-stone-400 uppercase tracking-wider mb-1">{t.currentTurn}</div>
           <div className="flex items-center gap-3">
             <div className={`w-4 h-4 rounded-full ${currentPlayer === Player.Black ? 'bg-black border border-gray-600' : 'bg-white'}`}></div>
             <span className="font-bold text-xl">
-              {currentPlayer === Player.Black ? 'Black' : 'White'}
+              {currentPlayer === Player.Black ? t.black : t.white}
             </span>
           </div>
           {status === GameStatus.Playing && (
             <div className="mt-2 text-xs text-amber-400">
-              Stone {stonesPlacedThisTurn + 1} of {isFirstMove ? '1' : '2'}
+              {t.stoneCount} {stonesPlacedThisTurn + 1} {t.of} {isFirstMove ? '1' : '2'}
             </div>
           )}
           {gameMode !== GameMode.Local && gameMode !== GameMode.AI && (
             <div className="mt-2 text-xs text-stone-500">
-              Playing as: {localPlayer === Player.Black ? 'Black' : 'White'}
+              {t.playingAs}: {localPlayer === Player.Black ? t.black : t.white}
             </div>
           )}
           {gameMode === GameMode.AI && (
              <div className="mt-2 text-xs text-indigo-300">
-                Mode: vs Computer
+                {t.modeVsComputer}
              </div>
           )}
         </div>
 
         {gameMode !== GameMode.Local && gameMode !== GameMode.AI && (
            <div className="bg-black/50 backdrop-blur-md rounded-lg p-3 text-white border border-white/10 pointer-events-auto flex flex-col items-end">
-             <div className="text-xs text-stone-400 mb-1">Room ID</div>
+             <div className="text-xs text-stone-400 mb-1">{t.roomId}</div>
              <div className="flex items-center gap-2">
                <code className="bg-black/50 px-2 py-1 rounded text-amber-200 select-all max-w-[150px] truncate">{myId}</code>
                <button onClick={copyId} className="text-xs hover:text-white text-stone-400">
-                 {copied ? 'Copied!' : 'Copy'}
+                 {copied ? t.copied + '!' : t.copy}
                </button>
              </div>
            </div>
@@ -403,9 +415,9 @@ export const Menu: React.FC<MenuProps> = ({
             </button>
 
             <h2 className="text-5xl font-black text-white mb-2">
-              {winner === Player.Black ? 'Black' : 'White'} Wins!
+              {winner === Player.Black ? t.black : t.white} {t.wins}
             </h2>
-            <p className="text-stone-400 mb-8">Victory achieved by connecting {WIN_COUNT} stones.</p>
+            <p className="text-stone-400 mb-8">{t.victory}</p>
 
             {/* Show waiting status for online games */}
             {(gameMode === GameMode.OnlineHost || gameMode === GameMode.OnlineJoin) && (
@@ -413,7 +425,7 @@ export const Menu: React.FC<MenuProps> = ({
                 {restartRequested && (
                   <div className="bg-amber-900/30 border border-amber-500/50 rounded-lg p-3 mb-4">
                     <p className="text-amber-200 text-sm">
-                      Opponent wants to play again. Click "Play Again" to accept.
+                      {t.opponentWantsRematch}
                     </p>
                   </div>
                 )}
@@ -421,7 +433,7 @@ export const Menu: React.FC<MenuProps> = ({
                   <div className="bg-blue-900/30 border border-blue-500/50 rounded-lg p-3 mb-4 flex items-center justify-center gap-2">
                     <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-blue-400"></div>
                     <p className="text-blue-200 text-sm">
-                      Waiting for opponent...
+                      {t.waitingForOpponentDecision}
                     </p>
                   </div>
                 )}
@@ -434,14 +446,14 @@ export const Menu: React.FC<MenuProps> = ({
                 className="py-3 px-8 bg-amber-600 hover:bg-amber-500 text-white font-bold rounded-full shadow-lg transition hover:scale-105"
               >
                 {(gameMode === GameMode.OnlineHost || gameMode === GameMode.OnlineJoin) && restartRequested
-                  ? 'Accept & Play Again'
-                  : 'Play Again'}
+                  ? t.acceptAndPlayAgain
+                  : t.playAgain}
               </button>
               <button
                 onClick={onLeave}
                 className="py-3 px-8 bg-stone-800 hover:bg-stone-700 text-stone-300 font-bold rounded-full transition"
               >
-                Main Menu
+                {t.mainMenu}
               </button>
             </div>
           </div>
@@ -455,9 +467,9 @@ export const Menu: React.FC<MenuProps> = ({
             {/* Game Result */}
             <div className="text-center mb-6">
               <h3 className="text-3xl font-bold text-white mb-2">
-                {winner === Player.Black ? 'Black' : 'White'} Wins!
+                {winner === Player.Black ? t.black : t.white} {t.wins}
               </h3>
-              <p className="text-stone-400 text-sm">Game ended - Ready for next round?</p>
+              <p className="text-stone-400 text-sm">{t.gameEnded}</p>
             </div>
 
             {/* Online game status */}
@@ -470,8 +482,8 @@ export const Menu: React.FC<MenuProps> = ({
                       <path d="M12 2v4m0 12v4M4.93 4.93l2.83 2.83m8.48 8.48l2.83 2.83M2 12h4m12 0h4M4.93 19.07l2.83-2.83m8.48-8.48l2.83-2.83"/>
                     </svg>
                     <div className="flex-1">
-                      <p className="text-amber-200 font-semibold">Opponent is ready!</p>
-                      <p className="text-amber-300/70 text-xs">Click "Play Again" to start next round</p>
+                      <p className="text-amber-200 font-semibold">{t.opponentReady}</p>
+                      <p className="text-amber-300/70 text-xs">{t.clickToStart}</p>
                     </div>
                   </div>
                 )}
@@ -481,8 +493,8 @@ export const Menu: React.FC<MenuProps> = ({
                   <div className="bg-blue-900/30 border border-blue-500/50 rounded-lg p-4 mb-3 flex items-center gap-3">
                     <div className="animate-spin rounded-full h-5 w-5 border-b-2 border-blue-400"></div>
                     <div className="flex-1">
-                      <p className="text-blue-200 font-semibold">Waiting for opponent...</p>
-                      <p className="text-blue-300/70 text-xs">You're ready for next round</p>
+                      <p className="text-blue-200 font-semibold">{t.waitingForOpponentDecision}</p>
+                      <p className="text-blue-300/70 text-xs">{t.readyForNext}</p>
                     </div>
                   </div>
                 )}
@@ -494,8 +506,8 @@ export const Menu: React.FC<MenuProps> = ({
                       <circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/>
                     </svg>
                     <div className="flex-1">
-                      <p className="text-stone-300 font-semibold">Opponent is viewing the board</p>
-                      <p className="text-stone-400 text-xs">Waiting for their decision</p>
+                      <p className="text-stone-300 font-semibold">{t.opponentViewing}</p>
+                      <p className="text-stone-400 text-xs">{t.waitingForDecision}</p>
                     </div>
                   </div>
                 )}
@@ -512,8 +524,8 @@ export const Menu: React.FC<MenuProps> = ({
                   <path d="M3 12a9 9 0 1 0 9-9 9.75 9.75 0 0 0-6.74 2.74L3 8"/><path d="M3 3v5h5"/>
                 </svg>
                 {(gameMode === GameMode.OnlineHost || gameMode === GameMode.OnlineJoin) && restartRequested
-                  ? 'Accept & Play Again'
-                  : 'Play Again'}
+                  ? t.acceptAndPlayAgain
+                  : t.playAgain}
               </button>
               <button
                 onClick={onLeave}
@@ -522,7 +534,7 @@ export const Menu: React.FC<MenuProps> = ({
                 <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
                   <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/>
                 </svg>
-                Main Menu
+                {t.mainMenu}
               </button>
             </div>
           </div>
@@ -531,11 +543,11 @@ export const Menu: React.FC<MenuProps> = ({
 
       {/* Back Button (bottom right) */}
       <div className="absolute bottom-4 right-4 z-10">
-          <button 
+          <button
             onClick={onLeave}
             className="bg-black/40 hover:bg-red-900/80 backdrop-blur text-white/70 hover:text-white px-4 py-2 rounded-lg transition text-sm border border-white/10"
           >
-            Exit Game
+            {t.exitGame}
           </button>
       </div>
     </>
