@@ -1,5 +1,5 @@
 import React, { useRef, useEffect } from 'react';
-import { Canvas } from '@react-three/fiber';
+import { Canvas, useFrame } from '@react-three/fiber';
 import { OrbitControls, Environment, PerspectiveCamera } from '@react-three/drei';
 import { Board } from './Board';
 import { Stone } from './Stone';
@@ -18,24 +18,42 @@ interface SceneProps {
   resetCameraTrigger: number;
 }
 
-// Helper component to handle controls reset
+// Helper component to handle controls reset and pan boundaries
 const CameraHandler: React.FC<{ trigger: number }> = ({ trigger }) => {
   const controlsRef = useRef<any>(null);
-  
+
   useEffect(() => {
     if (controlsRef.current) {
       controlsRef.current.reset();
     }
   }, [trigger]);
 
+  // Use useFrame to clamp pan boundaries every frame
+  useFrame(() => {
+    if (!controlsRef.current) return;
+
+    const controls = controlsRef.current;
+    const target = controls.target;
+
+    // Set pan boundaries - limit how far camera target can move from origin
+    const maxPanDistance = 15; // Allow panning 15 units from center (board is -9 to +9)
+    const maxPanY = 2; // Limit vertical pan
+
+    // Clamp the target position
+    target.x = Math.max(-maxPanDistance, Math.min(maxPanDistance, target.x));
+    target.z = Math.max(-maxPanDistance, Math.min(maxPanDistance, target.z));
+    target.y = Math.max(-maxPanY, Math.min(maxPanY, target.y));
+  });
+
   return (
-    <OrbitControls 
+    <OrbitControls
         ref={controlsRef}
-        minPolarAngle={0} 
-        maxPolarAngle={Math.PI / 2.2} 
-        minDistance={10} 
-        maxDistance={40} 
+        minPolarAngle={0}
+        maxPolarAngle={Math.PI / 2.2}
+        minDistance={10}
+        maxDistance={40}
         enablePan={true}
+        enableDamping={true}
         dampingFactor={0.05}
         makeDefault
     />
